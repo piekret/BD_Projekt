@@ -536,8 +536,20 @@ def anulujzam():
     for i in [x[0] for x in session.execute("SELECT Status FROM Zamowienie WHERE ZamowienieID = ?", zamowienieID)]:
         if i != 'Zrealizowane':
             session.execute("UPDATE Zamowienie SET Status = 'Anulowane' WHERE ZamowienieID = ?", zamowienieID)
+            session.commit()
         else:
             tekst = Label(okno, text='Już Zrealizowane').pack()
+
+
+def wyswietlNieZrealizowane():
+    tabela.delete(*tabela.get_children())
+    for i, zam in enumerate(session.execute("SELECT * FROM vNieZrealizowane")):
+        tabela.insert(parent='', index=i, values=(zam.ZamowienieID,
+                                                  zam.DostawcaID,
+                                                  zam.Opis,
+                                                  zam.DataZamowienia,
+                                                  zam.Status))
+
 
 
 def zamowienia():
@@ -561,7 +573,8 @@ def zamowienia():
     zlozZamowienieBtn = Button(okno, text='Złóż Zamówienie', command=zlozZamowienie).place(x=50, y=400)
     zamowScgBtn = Button(okno, text='Zamowienia Szczegóły', command=zamowieniaSczeg).place(x=540, y=250)
     zrealizowanebtn = Button(okno, text='Zrealizowane', command=zrealizowane).place(x=150, y=400)
-    anulujbtn = Button(okno, text='Anuluj', command=anulujzam).place(x=220, y=400)
+    anulujbtn = Button(okno, text='Anuluj', command=anulujzam).place(x=240, y=400)
+    niezrealizowanebtn = Button(okno, text='Nie Zrealizowane', command=wyswietlNieZrealizowane).place(x=290, y=400)
 
     dodajPrzyciskWracaj()
 
