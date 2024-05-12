@@ -75,15 +75,23 @@ ADD [Status] CHAR(1)
 ALTER TABLE ZamowienieSzczegoly
 ADD DataWaznosci DATE
 
+
 CREATE VIEW vAktywniPracownicy
 AS
 	SELECT * FROM Pracownik
 	WHERE [Status] = 'Pracuje'
 
+
 CREATE VIEW vAktywniDostawcy
 AS
 	SELECT * FROM Dostawca
 	WHERE [Status] = 'T'
+
+
+CREATE VIEW vNieZrealizowane
+AS
+	SELECT * FROM Zamowienie
+	WHERE [Status] = 'W Realizacji'
 
 
 CREATE OR ALTER PROC uspDodajDoZamowienia(@ZamowienieID INT, @ProduktID INT, @Ilosc FLOAT, @Cena MONEY)
@@ -96,7 +104,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        RAISERROR('Nie prawid≥owe zamÛwienie', 10, 10)
+        RAISERROR('Nie prawid≈Çowe zam√≥wienie', 10, 10)
     END
 END
 
@@ -105,7 +113,7 @@ CREATE TRIGGER trMagazyn ON Magazyn
 INSTEAD OF INSERT, UPDATE, DELETE
 AS
 BEGIN
-	RAISERROR('Uøyj Procedury', 10, 10)
+	RAISERROR('U≈ºyj Procedury', 10, 10)
 	ROLLBACK TRAN
 END
 
@@ -114,7 +122,7 @@ CREATE TRIGGER trSprzedaz ON Sprzedaz
 INSTEAD OF INSERT, UPDATE, DELETE
 AS
 BEGIN
-	RAISERROR('Uøyj Procedury', 10, 10)
+	RAISERROR('U≈ºyj Procedury', 10, 10)
 	ROLLBACK TRAN
 END
 
