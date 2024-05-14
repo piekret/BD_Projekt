@@ -104,7 +104,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        RAISERROR('Nie prawidłowe zamówienie', 10, 10)
+        RAISERROR('Nie prawid�owe zam�wienie', 10, 10)
     END
 END
 
@@ -113,7 +113,7 @@ CREATE TRIGGER trMagazyn ON Magazyn
 INSTEAD OF INSERT, UPDATE, DELETE
 AS
 BEGIN
-	RAISERROR('Użyj Procedury', 10, 10)
+	RAISERROR('U�yj Procedury', 10, 10)
 	ROLLBACK TRAN
 END
 
@@ -122,7 +122,7 @@ CREATE TRIGGER trSprzedaz ON Sprzedaz
 INSTEAD OF INSERT, UPDATE, DELETE
 AS
 BEGIN
-	RAISERROR('Użyj Procedury', 10, 10)
+	RAISERROR('U�yj Procedury', 10, 10)
 	ROLLBACK TRAN
 END
 
