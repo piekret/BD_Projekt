@@ -32,7 +32,7 @@ def ttreeview(*args):
 def dodajDost():
     dodaj = Tk()
     dodaj.title('Dodawanie Dostawcy')
-    dodaj.geometry('350x175')
+    dodaj.geometry('350x200')
 
     nazwatxt = Label(dodaj, text='Nazwa:').pack()
     nazwa = Entry(dodaj)
@@ -47,10 +47,14 @@ def dodajDost():
     adres.pack()
 
     def dodajDo():
-        session.execute("INSERT INTO Dostawca VALUES(?, ?, ?, 'T')",
-                        nazwa.get(), email.get(), adres.get())
-        session.commit()
-        dodaj.destroy()
+        if len(nazwa.get()) > 0 and len(email.get()) > 0 and len(adres.get()) > 0:
+            session.execute("INSERT INTO Dostawca VALUES(?, ?, ?, 'T')",
+                            nazwa.get(), email.get(), adres.get())
+            session.commit()
+            dodaj.destroy()
+            Label(okno, text='Powiodło się').pack()
+        else:
+            Label(dodaj, text='Wypełnij pola').pack()
 
     dodajBtn = Button(dodaj, text='Dodaj', command=dodajDo).pack()
 
@@ -66,7 +70,7 @@ def nieaktywnyDost():
 def edytujDost():
     edytuj = Tk()
     edytuj.title('Edytowanie Dostawcy')
-    edytuj.geometry('375x190')
+    edytuj.geometry('375x230')
 
     selected_item = tabela.selection()[0]
     dostawcaID = tabela.item(selected_item, 'values')[0]
@@ -91,10 +95,14 @@ def edytujDost():
 
 
     def edytujDOST():
-        session.execute("UPDATE Dostawca SET Nazwa = ?, Email = ?, Adres = ? WHERE DostawcaID = ?",
-                        nazwa.get(), email.get(), adres.get(), dostawcaID)
-        session.commit()
-        edytuj.destroy()
+        if len(nazwa.get()) > 0 and len(email.get()) > 0 and adres.get() > 0:
+            session.execute("UPDATE Dostawca SET Nazwa = ?, Email = ?, Adres = ? WHERE DostawcaID = ?",
+                            nazwa.get(), email.get(), adres.get(), dostawcaID)
+            session.commit()
+            edytuj.destroy()
+            Label(okno, text='Powiodło się').pack()
+        else:
+            Label(edytuj, text='Wypełnij Pola').pack()
 
     btn = Button(edytuj, text='Ok', command=edytujDOST).pack()
 
@@ -186,10 +194,14 @@ def dodajPracownika():
     nazwisko.pack()
 
     def dodajpr():
-        session.execute("INSERT INTO Pracownik (Imie, Nazwisko, DataZatrudnienia, Status) VALUES (?, ?, GETDATE(), 'Pracuje')",
-                        imie.get(), nazwisko.get())
-        session.commit()
-        dodawanie.destroy()
+        if len(nazwisko.get()) > 0 and len(imie.get()) > 0:
+            session.execute("INSERT INTO Pracownik (Imie, Nazwisko, DataZatrudnienia, Status) VALUES (?, ?, GETDATE(), 'Pracuje')",
+                            imie.get(), nazwisko.get())
+            session.commit()
+            dodawanie.destroy()
+            Label(okno, text='Powiodło się').pack()
+        else:
+            Label(dodawanie, text='Wypełnij Pola').pack()
 
     dodajBtn = Button(dodawanie, text='Dodaj', command=dodajpr)
     dodajBtn.pack()
@@ -216,7 +228,7 @@ def edytujPrac():
     nazwisko.pack()
 
     opcje = ['Pracuje', 'Zwolniony']
-    status = StringVar(edytuj)
+    status = StringVar(edytuj, value=tabela.item(selected_item, 'values')[-1])
     statustxt = Label(edytuj, text='Status: ').pack()
     statusopcj = OptionMenu(edytuj, status, *opcje)
     statusopcj.pack()
@@ -281,9 +293,13 @@ def dodajProdukt():
     domyslnacena.pack()
 
     def dodajProd():
-        session.execute("INSERT INTO Produkt VALUES(?, ?)", nazwa.get(), domyslnacena.get())
-        session.commit()
-        dodaj.destroy()
+        if len(nazwa.get()) > 0 and len(domyslnacena.get()) > 0:
+            session.execute("INSERT INTO Produkt VALUES(?, ?)", nazwa.get(), domyslnacena.get())
+            session.commit()
+            dodaj.destroy()
+            Label(okno, text='Powiodło sie').pack()
+        else:
+            Label(dodaj, text='Wypełnij Pola').pack()
 
     dodajp = Button(dodaj, text='Dodaj', command=dodajProd).pack()
 
@@ -355,19 +371,19 @@ def dodajSprzed():
     zamow.geometry('375x275')
 
     opcjePracownika = [prac.PracownikID for prac in session.execute("SELECT * FROM vAktywniPracownicy")]
-    pracownik = IntVar(zamow)
+    pracownik = IntVar(zamow, value=opcjePracownika[0])
     pracowniktxt = Label(zamow, text='Dostawca:').pack()
     wyborPracownika = OptionMenu(zamow, pracownik, *opcjePracownika)
     wyborPracownika.pack()
 
     opcjerodzaju = ['elektroniczna', 'gotówka']
-    rodzaj = StringVar(zamow)
+    rodzaj = StringVar(zamow, value=opcjerodzaju[1])
     rodzajtxt = Label(zamow, text='Platnosc').pack()
     rodzaja = OptionMenu(zamow, rodzaj, *opcjerodzaju)
     rodzaj.pack()
 
     opcjeProduktu = [prod[0] for prod in session.execute("SELECT Nazwa FROM Produkt")]
-    produkt = StringVar(zamow)
+    produkt = StringVar(zamow, value=opcjeProduktu[0])
     produkttxt = Label(zamow, text='Produkt:').pack()
     wyborProduktu = OptionMenu(zamow, produkt, *opcjeProduktu)
     wyborProduktu.pack()
@@ -381,16 +397,21 @@ def dodajSprzed():
     cena.pack()
 
     def dodajspr():
-        pracownikID = [x[0] for x in session.execute("SELECT PracownikID FROM Pracownik WHERE PracownikID = ?", pracownik.get())][0]
-        ProduktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
+        if len(ilosc.get()) > 0 and len(cena.get()) > 0 and len(rodzaj.get()) > 0:
+            pracownikID = [x[0] for x in session.execute("SELECT PracownikID FROM Pracownik WHERE PracownikID = ?", pracownik.get())][0]
+            ProduktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
 
-        session.execute("EXEC uspDodajSprzedaz @PracownikID = ?, @RodzajPlatnosci = ?, @ProduktID = ?, @Cena = ?, @Ilosc = ?",
-                        pracownikID, rodzaj.get(), ProduktID, float(cena.get()), float(ilosc.get()))
-        
-        identity = [x[0] for x in session.execute("SELECT @@IDENTITY")][0]
-        session.execute("EXEC uspSprzedaz @SprzedazID = ?", identity)
-        session.commit()
-        zamow.destroy()
+            session.execute("EXEC uspDodajSprzedaz @PracownikID = ?, @RodzajPlatnosci = ?, @ProduktID = ?, @Cena = ?, @Ilosc = ?",
+                            pracownikID, rodzaj.get(), ProduktID, float(cena.get()), float(ilosc.get()))
+            
+            identity = [x[0] for x in session.execute("SELECT @@IDENTITY")][0]
+            session.execute("EXEC uspSprzedaz @SprzedazID = ?", identity)
+            session.commit()
+            zamow.destroy()
+            Label(okno, text='Powiodło się').pack()
+        else:
+            Label(zamow, text='Wypełnij Pola').pack()
+
 
     btn = Button(zamow, text='Złóż Zamówienie', command=dodajspr).pack()
 
@@ -427,7 +448,7 @@ def dodajDoSprzed():
     sprzedazID = tabela.item(selected_item, 'values')[1]
 
     opcjeProduktu = [prod[0] for prod in session.execute("SELECT Nazwa FROM Produkt")]
-    produkt = StringVar(dodaj)
+    produkt = StringVar(dodaj, value=opcjeProduktu[0])
     produkttxt = Label(dodaj, text='Produkt:').pack()
     wyborProduktu = OptionMenu(dodaj, produkt, *opcjeProduktu)
     wyborProduktu.pack()
@@ -441,11 +462,15 @@ def dodajDoSprzed():
     cena.pack()
 
     def dodajdosprzed():
-        produktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
-        session.execute("INSERT INTO SprzedazSzczegoly VALUES (?, ?, ?, ?)",
-                        sprzedazID, produktID, cena.get(), ilosc.get())
-        session.commit()
-        dodaj.destroy()
+        if len(ilosc.get()) > 0 and len(cena.get()) > 0 and len(produkt.get()) > 0:
+            produktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
+            session.execute("INSERT INTO SprzedazSzczegoly VALUES (?, ?, ?, ?)",
+                            sprzedazID, produktID, cena.get(), ilosc.get())
+            session.commit()
+            dodaj.destroy()
+            Label(okno, text='Powiodło się').pack()
+        else:
+            Label(dodaj, text='Wypełnij pola').pack()
 
     btn = Button(dodaj, text='Dodaj', command=dodajdosprzed).pack()
 
@@ -478,7 +503,7 @@ def zlozZamowienie():
     zamow.geometry('375x275')
 
     opcjeDostawcy = [dost.Nazwa for dost in session.execute("SELECT * FROM vAktywniDostawcy")]
-    dostawca = StringVar(zamow)
+    dostawca = StringVar(zamow, value=opcjeDostawcy[0])
     dostawcatxt = Label(zamow, text='Dostawca:').pack()
     wyborDostawcy = OptionMenu(zamow, dostawca, *opcjeDostawcy)
     wyborDostawcy.pack()
@@ -488,7 +513,7 @@ def zlozZamowienie():
     opis.pack()
 
     opcjeProduktu = [prod[0] for prod in session.execute("SELECT Nazwa FROM Produkt")]
-    produkt = StringVar(zamow)
+    produkt = StringVar(zamow, value=opcjeProduktu[0])
     produkttxt = Label(zamow, text='Produkt:').pack()
     wyborProduktu = OptionMenu(zamow, produkt, *opcjeProduktu)
     wyborProduktu.pack()
@@ -502,17 +527,21 @@ def zlozZamowienie():
     cena.pack()
 
     def dodajzam():
-        DostawcaID = [x[0] for x in session.execute("SELECT DostawcaID FROM Dostawca WHERE Nazwa = ?", dostawca.get())][0]
-        ProduktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
+        if len(opis.get()) > 0 and len(ilosc.get()) > 0 and len(cena.get()) > 0 and len(dostawca.get()) > 0 and len(produkt.get()) > 0:
+            DostawcaID = [x[0] for x in session.execute("SELECT DostawcaID FROM Dostawca WHERE Nazwa = ?", dostawca.get())][0]
+            ProduktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
 
-        session.execute("INSERT INTO Zamowienie VALUES(?, ?, GETDATE(), 'W Realizacji')",
-                        DostawcaID, opis.get())
+            session.execute("INSERT INTO Zamowienie VALUES(?, ?, GETDATE(), 'W Realizacji')",
+                            DostawcaID, opis.get())
 
-        identity = [x[0] for x in session.execute("SELECT @@IDENTITY")][0]
-        session.execute("INSERT INTO ZamowienieSzczegoly(ZamowienieID, ProduktID, Ilosc, Cena) VALUES(?, ?, ?, ?)",
-                        identity, ProduktID, float(ilosc.get()), float(cena.get()))
-        session.commit()
-        zamow.destroy()
+            identity = [x[0] for x in session.execute("SELECT @@IDENTITY")][0]
+            session.execute("INSERT INTO ZamowienieSzczegoly(ZamowienieID, ProduktID, Ilosc, Cena) VALUES(?, ?, ?, ?)",
+                            identity, ProduktID, float(ilosc.get()), float(cena.get()))
+            session.commit()
+            zamow.destroy()
+            Label(okno, text='Powodło się').pack()
+        else:
+            Label(zamow, text='wypełnij pola').pack()
 
     btn = Button(zamow, text='Złóż Zamówienie', command=dodajzam).pack()
 
@@ -602,11 +631,15 @@ def dodajDoZam():
     cena.pack()
 
     def dodajdozam():
-        produktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
-        session.execute("EXEC uspDodajDoZamowienia @ZamowienieID = ?, @ProduktID = ?, @Ilosc = ?, @Cena = ?",
-                        dostawcaID, produktID, ilosc.get(), cena.get())
-        session.commit()
-        dodaj.destroy()
+        if len(ilosc.get()) > 0 and len(cena.get()) > 0:
+            produktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
+            session.execute("EXEC uspDodajDoZamowienia @ZamowienieID = ?, @ProduktID = ?, @Ilosc = ?, @Cena = ?",
+                            dostawcaID, produktID, ilosc.get(), cena.get())
+            session.commit()
+            dodaj.destroy()
+            Label(okno, text='Powiodło się').pack()
+        else:
+            Label(dodaj, text='wypełnij pola').pack()
 
     btn = Button(dodaj, text='Dodaj', command=dodajdozam).pack()
 
@@ -619,14 +652,18 @@ def edytujDate():
     selected_item = tabela.selection()[0]
     iD = tabela.item(selected_item, 'values')[0]
     
-    datawaznoscitxt = Label(edytuj, text='Data Ważnosci:').pack()
+    datawaznoscitxt = Label(edytuj, text='Data Ważnosci (yyyy-mm-dd):').pack()
     data = Entry(edytuj)
     data.pack()
 
     def dodajDate():
-        session.execute("UPDATE ZamowienieSzczegoly SET DataWaznosci = ? WHERE ID = ?", data.get(), iD)
-        session.commit()
-        edytuj.destroy()
+        if len(data.get()) > 0:
+            session.execute("UPDATE ZamowienieSzczegoly SET DataWaznosci = ? WHERE ID = ?", data.get(), iD)
+            session.commit()
+            edytuj.destroy()
+            Label(okno, text='Powiodło się').pack()
+        else:
+            Label(edytuj, text='Wypełnij Pole').pack()
 
     btn = Button(edytuj, text='Dodaj', command=dodajDate).pack()
 
