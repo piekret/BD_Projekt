@@ -726,7 +726,7 @@ def main():
     menu_glowne()
     global session
     session = dbConnect("DRIVER={SQL SERVER};"
-                       "SERVER=DESKTOP-RS1ONME\\SQLEXPRESS;"
+                       "SERVER=<servername>\\SQLEXPRESS;"
                        "Database=SklepMiesny;"
                        "Trusted_Connection=yes;")
     mainloop()
