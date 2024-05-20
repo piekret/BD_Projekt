@@ -18,12 +18,12 @@ CREATE TABLE Produkt (
 	DomyslnaCena MONEY NOT NULL
 )
 
-
 CREATE TABLE Dostawca (
 	DostawcaID INT IDENTITY(1,1) PRIMARY KEY,
 	Nazwa VARCHAR(200) NOT NULL,
 	Email VARCHAR(50) NOT NULL,
-	Adres VARCHAR(200) NOT NULL
+	[Status] CHAR(1) NOT NULL,
+	Miasto VARCHAR(64) NOT NULL,
 )
 
 CREATE TABLE Zamowienie (
@@ -94,6 +94,34 @@ AS
 	WHERE [Status] = 'W Realizacji'
 
 
+CREATE VIEW vZamowienie
+AS
+	SELECT z.ZamowienieID, d.Nazwa, z.Opis, z.DataZamowienia, z.[Status]
+	FROM Zamowienie z
+	JOIN Dostawca d ON z.DostawcaID = d.DostawcaID
+
+
+CREATE VIEW vSprzedSzczeg
+AS
+	SELECT s.SprzedazID, p.Nazwa, s.Cena, s.Ilosc
+	FROM SprzedazSzczegoly s
+	JOIN Produkt p ON p.ProduktID = s.ProduktID
+
+
+CREATE VIEW vMagazyn
+AS
+	SELECT m.ID, p.Nazwa, m.Ilosc, m.DataWaznosci
+	FROM Magazyn m
+	JOIN Produkt p ON m.ProduktID = p.ProduktID
+
+
+CREATE VIEW vZamSzczeg
+AS
+	SELECT zs.ID, zs.ZamowienieID, p.Nazwa, zs.Ilosc, zs.Cena, zs.DataWaznosci
+	FROM ZamowienieSzczegoly zs
+	JOIN Produkt p ON p.ProduktID = zs.ProduktID
+
+
 CREATE OR ALTER PROC uspDodajDoZamowienia(@ZamowienieID INT, @ProduktID INT, @Ilosc FLOAT, @Cena MONEY)
 AS
 BEGIN
@@ -104,7 +132,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        RAISERROR('Nie prawid�owe zam�wienie', 10, 10)
+        RAISERROR('Nie prawidłowe zamówienie', 10, 10)
     END
 END
 
@@ -113,7 +141,7 @@ CREATE TRIGGER trMagazyn ON Magazyn
 INSTEAD OF INSERT, UPDATE, DELETE
 AS
 BEGIN
-	RAISERROR('U�yj Procedury', 10, 10)
+	RAISERROR('Użyj Procedury', 10, 10)
 	ROLLBACK TRAN
 END
 
@@ -122,7 +150,7 @@ CREATE TRIGGER trSprzedaz ON Sprzedaz
 INSTEAD OF INSERT, UPDATE, DELETE
 AS
 BEGIN
-	RAISERROR('U�yj Procedury', 10, 10)
+	RAISERROR('Użyj Procedury', 10, 10)
 	ROLLBACK TRAN
 END
 
@@ -185,19 +213,7 @@ BEGIN
 	;ENABLE TRIGGER trMagazyn ON Magazyn
 END
 
-
-CREATE OR ALTER PROC uspDodajSprzedaz(@PracownikID INT, @RodzajPlatnosci VARCHAR(25), @ProduktID INT, @Cena MONEY, @Ilosc FLOAT)
-AS
-BEGIN
-	;DISABLE TRIGGER trSprzedaz ON Sprzedaz
-
-	INSERT INTO Sprzedaz VALUES(@PracownikID, GETDATE(),@RodzajPlatnosci)
-	INSERT INTO SprzedazSzczegoly VALUES((SELECT @@IDENTITY), @ProduktID, @Cena, @Ilosc)
-
-	;ENABLE TRIGGER trSprzedaz ON Sprzedaz
-END
-
-CREATE OR ALTER PROC  uspSprzedaz(@SprzedazID INT)
+CREATE OR ALTER PROC uspSprzedaz(@SprzedazID INT)
 AS
 BEGIN
 	;DISABLE TRIGGER trMagazyn ON Magazyn
@@ -260,10 +276,27 @@ BEGIN
 			SET Ilosc = Ilosc - @Ilosc
 			WHERE ID = @MagazynID
 		END
+		FETCH NEXT FROM @linie
+		INTO @ID, @ProduktID, @Ilosc
 	END
 
 	CLOSE @linie
 	DEALLOCATE @linie
 
 	;ENABLE TRIGGER trMagazyn ON Magazyn
+END
+
+CREATE OR ALTER PROC uspDodajSprzedaz(@PracownikID INT, @RodzajPlatnosci VARCHAR(25), @ProduktID INT, @Cena MONEY, @Ilosc FLOAT)
+AS
+BEGIN
+	DECLARE @idnt INT
+	;DISABLE TRIGGER trSprzedaz ON Sprzedaz
+
+	INSERT INTO Sprzedaz VALUES(@PracownikID, GETDATE(),@RodzajPlatnosci)
+	SELECT @idnt = @@IDENTITY
+	INSERT INTO SprzedazSzczegoly VALUES(@idnt, @ProduktID, @Cena, @Ilosc)
+
+	EXEC uspSprzedaz @idnt
+
+	;ENABLE TRIGGER trSprzedaz ON Sprzedaz
 END
