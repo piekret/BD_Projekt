@@ -88,15 +88,15 @@ def edytujDost():
     email.insert(0, email2)
     email.pack()
 
-    adrestxt = Label(edytuj, text='Adres:').pack()
+    adrestxt = Label(edytuj, text='Miasto:').pack()
     adres = Entry(edytuj)
     adres.insert(0, adres2)
     adres.pack()
 
 
     def edytujDOST():
-        if len(nazwa.get()) > 0 and len(email.get()) > 0 and adres.get() > 0:
-            session.execute("UPDATE Dostawca SET Nazwa = ?, Email = ?, Adres = ? WHERE DostawcaID = ?",
+        if len(nazwa.get()) > 0 and len(email.get()) > 0 and len(adres.get()) > 0:
+            session.execute("UPDATE Dostawca SET Nazwa = ?, Email = ?, Miasto = ? WHERE DostawcaID = ?",
                             nazwa.get(), email.get(), adres.get(), dostawcaID)
             session.commit()
             edytuj.destroy()
@@ -114,7 +114,7 @@ def wyswietlaktywnych():
         tabela.insert(parent='', index=i, values=(dost.DostawcaID,
                                                   dost.Nazwa,
                                                   dost.Email,
-                                                  dost.Adres,
+                                                  dost.Miasto,
                                                   dost.Status))
 
 
@@ -126,14 +126,14 @@ def dostawcy():
     okno.geometry('750x500')
 
     global tabela
-    tabela = ttreeview("DostawcaID", "Nazwa", "Email", "Adres", "Status")
+    tabela = ttreeview("DostawcaID", "Nazwa", "Email", "Miasto", "Status")
 
     dostawcyy = session.execute("SELECT * FROM Dostawca")
     for i, dost in enumerate(dostawcyy):
         tabela.insert(parent='', index=i, values=(dost.DostawcaID,
                                                   dost.Nazwa,
                                                   dost.Email,
-                                                  dost.Adres,
+                                                  dost.Miasto,
                                                   dost.Status))
     tabela.pack(pady=20, padx=75)
 
@@ -166,12 +166,12 @@ def magazynek():
     okno.title('Sklep Mięsny - Magazyn')
     okno.geometry('750x500')
 
-    tabela = ttreeview("ID", "ProduktID", "Ilosc", "DataWaznosci")
+    tabela = ttreeview("ID", "Nazwa", "Ilosc", "DataWaznosci")
 
-    linie = session.execute("SELECT * FROM Magazyn")
+    linie = session.execute("SELECT * FROM vMagazyn")
     for i, ln in enumerate(linie):
         tabela.insert(parent='', index=i, values=(ln.ID,
-                                                  ln.ProduktID,
+                                                  ln.Nazwa,
                                                   ln.Ilosc,
                                                   ln.DataWaznosci))
     tabela.pack()
@@ -372,7 +372,7 @@ def dodajSprzed():
 
     opcjePracownika = [prac.PracownikID for prac in session.execute("SELECT * FROM vAktywniPracownicy")]
     pracownik = IntVar(zamow, value=opcjePracownika[0])
-    pracowniktxt = Label(zamow, text='Dostawca:').pack()
+    pracowniktxt = Label(zamow, text='Pracownik:').pack()
     wyborPracownika = OptionMenu(zamow, pracownik, *opcjePracownika)
     wyborPracownika.pack()
 
@@ -380,7 +380,7 @@ def dodajSprzed():
     rodzaj = StringVar(zamow, value=opcjerodzaju[1])
     rodzajtxt = Label(zamow, text='Platnosc').pack()
     rodzaja = OptionMenu(zamow, rodzaj, *opcjerodzaju)
-    rodzaj.pack()
+    rodzaja.pack()
 
     opcjeProduktu = [prod[0] for prod in session.execute("SELECT Nazwa FROM Produkt")]
     produkt = StringVar(zamow, value=opcjeProduktu[0])
@@ -403,9 +403,6 @@ def dodajSprzed():
 
             session.execute("EXEC uspDodajSprzedaz @PracownikID = ?, @RodzajPlatnosci = ?, @ProduktID = ?, @Cena = ?, @Ilosc = ?",
                             pracownikID, rodzaj.get(), ProduktID, float(cena.get()), float(ilosc.get()))
-            
-            identity = [x[0] for x in session.execute("SELECT @@IDENTITY")][0]
-            session.execute("EXEC uspSprzedaz @SprzedazID = ?", identity)
             session.commit()
             zamow.destroy()
             Label(okno, text='Powiodło się').pack()
@@ -483,13 +480,13 @@ def sprzedaznoscSczeg():
     okno.geometry('750x500')
 
     global tabela
-    tabela = ttreeview("SprzedazID", "ProduktID", "Cena", "Ilosc")
+    tabela = ttreeview("SprzedazID", "Nazwa", "Cena", "Ilosc")
 
-    sprzedazescg = session.execute("SELECT * FROM SprzedazSzczegoly")
+    sprzedazescg = session.execute("SELECT * FROM vSprzedSzczeg")
     for i, scg in enumerate(sprzedazescg):
         tabela.insert(parent='', index=i, values=(scg.SprzedazID,
-                                                  scg.ProduktID,
-                                                  scg.Cena,
+                                                  scg.Nazwa,
+                                                  f'{scg.Cena:.2f}',
                                                   scg.Ilosc))
     tabela.pack(pady=20, padx=75)
     dodajbtn = Button(okno, text='Dodaj do sprzedaży', command=dodajDoSprzed).place(x=50, y=400)
@@ -499,7 +496,7 @@ def sprzedaznoscSczeg():
 
 def zlozZamowienie():
     zamow = Tk()
-    zamow.title('Zkładanie Zamówienia')
+    zamow.title('Składanie Zamówienia')
     zamow.geometry('375x275')
 
     opcjeDostawcy = [dost.Nazwa for dost in session.execute("SELECT * FROM vAktywniDostawcy")]
@@ -590,10 +587,10 @@ def zamowienia():
 
     global tabela
     tabela = ttreeview("ZamowienieID", "DostawcaID", "Opis", "DataZamowienia", "Status")
-    zamowienia = session.execute("SELECT * FROM Zamowienie")
+    zamowienia = session.execute("SELECT * FROM vZamowienie")
     for i, zam in enumerate(zamowienia):
         tabela.insert(parent='', index=i, values=(zam.ZamowienieID,
-                                                  zam.DostawcaID,
+                                                  zam.Nazwa,
                                                   zam.Opis,
                                                   zam.DataZamowienia,
                                                   zam.Status))
@@ -634,7 +631,7 @@ def dodajDoZam():
         if len(ilosc.get()) > 0 and len(cena.get()) > 0:
             produktID = [p[0] for p in session.execute("SELECT ProduktID FROM Produkt WHERE Nazwa = ?", produkt.get())][0]
             session.execute("EXEC uspDodajDoZamowienia @ZamowienieID = ?, @ProduktID = ?, @Ilosc = ?, @Cena = ?",
-                            dostawcaID, produktID, ilosc.get(), cena.get())
+                            dostawcaID, produktID, float(ilosc.get()), float(cena.get()))
             session.commit()
             dodaj.destroy()
             Label(okno, text='Powiodło się').pack()
@@ -677,11 +674,11 @@ def zamowieniaSczeg():
 
     global tabela
     tabela = ttreeview("ID", "ZamowienieID", "ProduktID", "Ilosc", "Cena", "DataWaznosci")
-    szczeg = session.execute("SELECT * FROM ZamowienieSzczegoly")
+    szczeg = session.execute("SELECT * FROM vZamSzczeg")
     for i, sc in enumerate(szczeg):
         tabela.insert(parent='', index=i, values=(sc.ID,
                                                   sc.ZamowienieID,
-                                                  sc.ProduktID,
+                                                  sc.Nazwa,
                                                   sc.Ilosc,
                                                   f'{sc.Cena:.2f}',
                                                   sc.DataWaznosci))
@@ -726,7 +723,7 @@ def main():
     menu_glowne()
     global session
     session = dbConnect("DRIVER={SQL SERVER};"
-                       "SERVER=<servername>\\SQLEXPRESS;"
+                       "SERVER=DESKTOP-RS1ONME\\SQLEXPRESS;"
                        "Database=SklepMiesny;"
                        "Trusted_Connection=yes;")
     mainloop()
